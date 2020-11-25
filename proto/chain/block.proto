@@ -1,0 +1,33 @@
+syntax = "proto3" ;
+package chain ;
+
+option go_package = "github.com/adithyabhatkajake/libapollo/chain" ;
+
+message ProtoHeader {
+    // Hash Pointer
+    bytes ParentHash = 1 ;
+    // Hash of all the transactions in this block
+    bytes BodyHash = 2 ;
+    // Block Height
+    uint64 Height = 3 ;
+    // The author of the block
+    uint64 Author = 4 ;
+	// The view number
+    uint64 View = 5 ;
+    // Any extra data
+    bytes Extra = 6 ;
+}
+
+message ProtoBlock {
+    chain.ProtoHeader Header = 1 ;
+    chain.ProtoBody Body = 2 ;
+    // The signature for the block
+	bytes Proof = 3 ;
+    // Block hash
+    bytes Hash = 4 ;
+}
+
+message ProtoBody {
+    repeated bytes TxHashes = 1 ;
+    repeated bytes Responses = 2 ;
+}

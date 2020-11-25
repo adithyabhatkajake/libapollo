@@ -1,0 +1,13 @@
+syntax = "proto3" ;
+package msg ;
+
+option go_package = "github.com/adithyabhatkajake/libapollo/msg" ;
+
+message Certificate {
+	// The data on which we need signatures
+	bytes data = 1 ;
+	// The raw signatures
+	repeated bytes signatures = 2;
+	// The IDs of the signers
+	repeated uint64 ids = 3 ;
+}

@@ -1,0 +1,33 @@
+syntax = "proto3" ;
+package msg ;
+
+option go_package = "github.com/adithyabhatkajake/libapollo/msg" ;
+
+import "chain/block.proto" ;
+
+message BlameData {
+	uint64 blameTarget = 1 ; // Who are we blaming?
+	uint64 view = 2 ; // In what view are we blaming this leader?
+}
+
+message Blame {
+	// Blame data <blame, blameTarget, view>
+	BlameData BlData = 1 ;
+	// Who is sending the blame 
+	uint64 BlOrigin = 2 ;
+	// Sign(<blame,pj,v>, sk_i)
+	bytes signature = 3 ;
+}
+
+message NoProgressBlame {
+	// A no progress blame is a simple blame
+	Blame blame = 1 ;
+}
+
+message EquivocationBlame {
+	// An equivocation blame is a regular blame along with equivocating information
+	Blame blame = 1 ;
+	// Equivocation proofs
+	chain.ProtoBlock b1 = 2 ;
+	chain.ProtoBlock b2 = 3 ;
+}

@@ -1,0 +1,11 @@
+syntax = "proto3" ;
+package msg ;
+
+option go_package = "github.com/adithyabhatkajake/libapollo/msg" ;
+
+import "chain/block.proto" ;
+
+message ProtoProp {
+    chain.ProtoBlock Blk = 1 ;
+}
+

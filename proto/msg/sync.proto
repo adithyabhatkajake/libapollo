@@ -1,0 +1,25 @@
+syntax = "proto3" ;
+package msg ;
+
+option go_package = "github.com/adithyabhatkajake/libapollo/msg" ;
+
+import "chain/block.proto" ;
+
+message RequestBlock {
+    // Requesting the block with this hash
+    bytes Hash = 1;
+}
+
+message ResponseBlock {
+    // Responding with a block for the request
+    chain.ProtoBlock Block = 1;
+}
+
+message RequestChain {
+    uint64 FromRound = 1 ;
+    bytes LastKnownHash = 2 ;
+}
+
+message ResponseChain {
+    repeated chain.ProtoBlock Chain = 1 ;
+}

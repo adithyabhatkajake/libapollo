@@ -1,0 +1,24 @@
+syntax = "proto3" ;
+package msg ;
+
+option go_package = "github.com/adithyabhatkajake/libapollo/msg" ;
+
+import "msg/blame.proto" ;
+import "msg/proposal.proto" ;
+import "msg/clientAck.proto" ;
+import "msg/sync.proto" ;
+
+message ApolloMsg {
+    oneof Msg {
+        msg.ProtoProp Prop = 1 ;
+        msg.NoProgressBlame Npblame = 2 ;
+        msg.EquivocationBlame Eqblame = 3 ;
+        msg.CommitAck Ack = 4 ;
+        bytes Tx = 5 ;
+        RequestBlock ReqBlk = 6 ;
+        RequestChain ReqChain = 7 ;
+        ResponseBlock RespBlk = 8 ;
+        ResponseChain RespChain = 9 ;
+    }
+}
+
