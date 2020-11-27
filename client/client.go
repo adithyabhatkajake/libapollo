@@ -219,7 +219,7 @@ func main() {
 	}
 
 	blksize := confData.GetBlockSize()
-	initialSendCmds := (f + 1) * blksize
+	initialSendCmds := 10 * (f + 1) * blksize
 
 	cmdChannel := make(chan *msg.ApolloMsg, BufferCommands)
 	voteChannel = make(chan *msg.CommitAck, blksize)

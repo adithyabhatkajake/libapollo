@@ -19,7 +19,7 @@ func (n *Apollo) react(m []byte, rw *bufio.ReadWriter) {
 	inMessage := &msg.ApolloMsg{}
 	err := pb.Unmarshal(m, inMessage)
 	if err != nil {
-		log.Error("Received an invalid protocol message from client", err)
+		log.Error("Received an invalid protocol message from the node", err)
 		return
 	}
 	n.msgChannel <- internalMsg{
@@ -65,7 +65,7 @@ func (n *Apollo) handleProtocolMsg(intMsg internalMsg) {
 
 // Process protocol messages
 func (n *Apollo) protocol() {
-	myID := n.GetID()
+	myID := n.GetId()
 	for {
 		select {
 		case intMsg, ok := <-n.msgChannel:

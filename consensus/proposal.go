@@ -20,7 +20,8 @@ func (n *Apollo) propose() {
 	n.TxExtractCh <- TxCleave{}
 	// Thanks for the block
 	cand := <-n.ExtractBlk
-	if cand == nil || len(cand) == 0 {
+	if cand == nil {
+		log.Trace("Pool does not have sufficient commands, cancelling a proposal")
 		return // we do not have enough blocks
 	}
 	// Propose this block

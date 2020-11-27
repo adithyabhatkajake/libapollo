@@ -22,6 +22,7 @@ func (p *RRPaceMaker) GetProposer() uint64 {
 }
 
 // OnFinishPropose cleans up after a propose
+// It updates the leader and the last seen block
 func (p *RRPaceMaker) OnFinishPropose(blk chain.Block) {
 	p.currentLeader = (p.currentLeader + 1) % p.numNodes
 	if p.lastBlock.GetHeight() < blk.GetHeight() {

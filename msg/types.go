@@ -5,6 +5,11 @@ import (
 	crypto "github.com/adithyabhatkajake/libchatter/crypto"
 )
 
+const (
+	// MaxMsgSize defines the biggest message to be ever recived in the system
+	MaxMsgSize = 1024 * 1024 * 1024 // 500 kB
+)
+
 // Proposal is an interface for new blocks proposed
 type Proposal interface {
 	Author() uint64

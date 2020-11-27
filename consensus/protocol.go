@@ -35,15 +35,17 @@ func (n *Apollo) Init(c *config.NodeConfig) {
 	// Setup maps
 	n.streamMap = make(map[uint64]*bufio.ReadWriter)
 
+	size := ProtocolMsgBuffer * n.GetBlockSize()
+
 	// Setup channels
-	n.NewTxCh = make(chan chain.Command, 5*n.GetBlockSize())
-	n.CommitNotifyCh = make(chan chain.Block, 1000)
-	n.PoolFull = make(chan ProposeReady, 1000)
+	n.NewTxCh = make(chan chain.Command, size)
+	n.CommitNotifyCh = make(chan chain.Block, size)
+	n.PoolFull = make(chan ProposeReady, size)
 	n.errCh = make(chan error, 1)
-	n.msgChannel = make(chan internalMsg, ProtocolMsgBuffer)
-	n.TxExtractCh = make(chan TxCleave, 1000)
-	n.ExtractBlk = make(chan []crypto.Hash, 1000)
-	n.NewBlockNotify = make(chan chain.Block, 1000)
+	n.msgChannel = make(chan internalMsg, size)
+	n.TxExtractCh = make(chan TxCleave, size)
+	n.ExtractBlk = make(chan []crypto.Hash, size)
+	n.NewBlockNotify = make(chan chain.Block, size)
 
 	n.clim = NewClientManager(n)
 	// Setup genesis
@@ -98,7 +100,8 @@ func (apl *Apollo) Setup(n *net.Network) error {
 				}
 				apl.netMutex.Lock()
 				apl.streamMap[idx] = bufio.NewReadWriter(
-					bufio.NewReader(s), bufio.NewWriter(s))
+					bufio.NewReaderSize(s, msg.MaxMsgSize),
+					bufio.NewWriterSize(s, msg.MaxMsgSize))
 				apl.netMutex.Unlock()
 				log.Info("Connected to Node ", idx)
 				break
@@ -126,7 +129,8 @@ func (n *Apollo) ProtoMsgHandler(s network.Stream) {
 	// A global buffer to collect messages
 	buf := make([]byte, msg.MaxMsgSize)
 	// Event Handler
-	rw := bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s))
+	rw := bufio.NewReadWriter(bufio.NewReaderSize(s, msg.MaxMsgSize),
+		bufio.NewWriterSize(s, msg.MaxMsgSize))
 	for {
 		// Receive a message from anyone and process them
 		len, err := rw.Read(buf)

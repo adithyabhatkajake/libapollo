@@ -21,7 +21,7 @@ const (
 
 // ClientManager manages client side protocol
 type ClientManager struct {
-	cliMap  map[*bufio.ReadWriter]bool
+	cliMap  map[*bufio.ReadWriter]struct{}
 	blkSize uint64
 
 	newTxCh        chan chain.Command
@@ -33,13 +33,13 @@ type ClientManager struct {
 	giveBlk        chan []crypto.Hash
 	newIncomingBlk chan chain.Block
 
-	cliMutex sync.RWMutex
+	sync.RWMutex
 }
 
 // NewClientManager returns a new initialized client manager
 func NewClientManager(n *Apollo) *ClientManager {
 	clim := &ClientManager{
-		cliMap:         make(map[*bufio.ReadWriter]bool),
+		cliMap:         make(map[*bufio.ReadWriter]struct{}),
 		blkSize:        n.GetBlockSize(),
 		newTxCh:        n.NewTxCh,
 		commitNotifyCh: n.CommitNotifyCh,
@@ -56,11 +56,17 @@ func NewClientManager(n *Apollo) *ClientManager {
 
 // AddClient adds a new client to cliMap
 func (clim *ClientManager) AddClient(rw *bufio.ReadWriter) {
-	clim.cliMap[rw] = true
+	clim.Lock()
+	defer clim.Unlock()
+
+	clim.cliMap[rw] = struct{}{}
 }
 
 // RemoveClient removes rw from cliMap after disconnection
 func (clim *ClientManager) RemoveClient(rw *bufio.ReadWriter) {
+	clim.Lock()
+	defer clim.Unlock()
+
 	delete(clim.cliMap, rw)
 }
 
@@ -68,8 +74,6 @@ func (clim *ClientManager) RemoveClient(rw *bufio.ReadWriter) {
 func (clim *ClientManager) ClientHandler() {
 	// Handle transactions here
 	txm := txpool.NewTxManager()
-	poolFull := false
-	// TODO: Only notify once when the pool becomes full
 	for {
 		select {
 		case tx := <-clim.newTxCh:
@@ -79,25 +83,21 @@ func (clim *ClientManager) ClientHandler() {
 			log.Debug("Received a transaction:", tx)
 			// Process new transaction
 			txm.AddCommand(tx) // Add command
-			if numCmds := txm.Size(); numCmds >= clim.blkSize && !poolFull {
+			if numCmds := txm.Size(); numCmds >= clim.blkSize {
 				// Let the proposer know that you can propose
 				clim.poolFull <- ProposeReady{}
-				poolFull = true // Prevent telling again that the pool is full
 			}
 		case <-clim.cleave:
 			// Someone wants to propose, and is requesting a block
 			if numCmds := txm.Size(); numCmds >= clim.blkSize {
 				newCandBlk := txm.GetBlock(clim.blkSize)
-				poolFull = txm.Size() >= clim.blkSize
 				clim.giveBlk <- newCandBlk
 			} else {
-				poolFull = false
 				clim.giveBlk <- nil
 			}
 		case blk := <-clim.newIncomingBlk:
 			log.Debug("We have a new block. Update the tx pool")
 			txm.Clear(blk.GetTxs())
-			poolFull = txm.Size() >= clim.blkSize
 		case blk := <-clim.commitNotifyCh:
 			log.Debug("Committing block:", blk)
 			// Send committed block to the clients
@@ -169,6 +169,8 @@ func (clim *ClientManager) ClientMsgHandler(s network.Stream) {
 
 // ClientBroadcast sends a protocol message to all the clients known to this instance
 func (clim *ClientManager) clientBroadcast(m *msg.ApolloMsg) {
+	clim.Lock()
+	defer clim.Unlock()
 	data, err := pb.Marshal(m)
 	if err != nil {
 		log.Error("Failed to send message", m, "to client")
